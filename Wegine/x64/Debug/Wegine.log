@@ -1,0 +1,16 @@
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(534,5): warning MSB8028: промежуточный каталог (x64\Debug\) содержит файлы, которые используются совместно с другим проектом (Wegine.vcxproj).  Это может привести к ошибкам очистки и перестроения.
+  Render.cpp
+C:\Users\game_\source\repos\RTX\Wegine\geometry.h(52,2): warning C4091: typedef : пропускается слева от "Polygon", когда ни одна переменная не объявлена
+C:\Users\game_\source\repos\RTX\Wegine\geometry.h(68,2): warning C4091: typedef : пропускается слева от "Raycast_ret", когда ни одна переменная не объявлена
+C:\Users\game_\source\repos\RTX\Wegine\Render.h(36,2): warning C4091: typedef : пропускается слева от "interval", когда ни одна переменная не объявлена
+C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(68,21): warning C4244: =: преобразование "double" в "float", возможна потеря данных
+C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(88,18): warning C4244: инициализация: преобразование "int" в "float", возможна потеря данных
+C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(182,51): warning C4244: =: преобразование "float" в "Uint8", возможна потеря данных
+C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(183,51): warning C4244: =: преобразование "float" в "Uint8", возможна потеря данных
+C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(184,51): warning C4244: =: преобразование "float" в "Uint8", возможна потеря данных
+C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(188,102): warning C4244: =: преобразование "float" в "Uint8", возможна потеря данных
+C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(189,102): warning C4244: =: преобразование "float" в "Uint8", возможна потеря данных
+C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(190,102): warning C4244: =: преобразование "float" в "Uint8", возможна потеря данных
+C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(207,24): warning C4244: =: преобразование "int" в "float", возможна потеря данных
+C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(265,42): warning C4244: +=: преобразование "double" в "float", возможна потеря данных
+  Wegine.vcxproj -> C:\Users\game_\source\repos\RTX\x64\Debug\RTX.exe
