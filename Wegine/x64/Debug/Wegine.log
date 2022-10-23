@@ -12,5 +12,5 @@ C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(188,102): warning C4244: =: п
 C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(189,102): warning C4244: =: преобразование "float" в "Uint8", возможна потеря данных
 C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(190,102): warning C4244: =: преобразование "float" в "Uint8", возможна потеря данных
 C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(207,24): warning C4244: =: преобразование "int" в "float", возможна потеря данных
-C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(265,42): warning C4244: +=: преобразование "double" в "float", возможна потеря данных
+C:\Users\game_\source\repos\RTX\Wegine\Render.cpp(262,42): warning C4244: +=: преобразование "double" в "float", возможна потеря данных
   Wegine.vcxproj -> C:\Users\game_\source\repos\RTX\x64\Debug\RTX.exe

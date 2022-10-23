@@ -3,12 +3,13 @@
 #include "geometry.h"
 #include <vector>
 #define THREADS 1
+
+const int SCREEN_WIDTH = 400;
+const int SCREEN_HEIGHT = 200;
 bool init();
 void quit();
 void set_pixel(int x, int y, SDL_Color cl);
 
-extern int SCREEN_WIDTH;
-extern int SCREEN_HEIGHT;
 extern SDL_Window* win;
 extern SDL_Surface* surf;
 

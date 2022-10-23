@@ -5,8 +5,6 @@
 
 using namespace std;
 
-int SCREEN_WIDTH = 400;
-int SCREEN_HEIGHT = 200;
 
 SDL_Window* win = NULL;
 SDL_Renderer* ren = NULL;
@@ -15,11 +13,11 @@ SDL_Surface* surf = NULL;
 bool init() {
     bool ok = true;
 
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+    if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS) != 0) {
         cout << "Can't init SDL: " << SDL_GetError() << endl;
     }
 
-    win = SDL_CreateWindow("Hueta", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    win = SDL_CreateWindow("Hueta", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN| SDL_WINDOW_VULKAN);
     if (win == NULL) {
         cout << "Can't create window: " << SDL_GetError() << endl;
         ok = false;
@@ -210,7 +208,9 @@ void Scene::new_render_thread(int from,int to)
             set_pixel(i, j, Raytrace(r, Render_depth,&void_mat));
         }
     }
+    
 }
+
 
 
 float Scene::LightCompute(Point pt, Vector norm, Vector r, float mir)

@@ -1,6 +1,7 @@
 ﻿#include "Render.h"
 #include "STL_parser.h"
 #include <iostream>
+
 using namespace std;
 
 extern int SCREEN_WIDTH;
@@ -9,7 +10,7 @@ extern SDL_Window* win;
 extern SDL_Surface* surf;
 int TimePerTick;
 
-int main(int arhc, char** argv) {
+int SDL_main(int arhc, char** argv) {
     if (!init()) {
         quit();
         system("pause");
