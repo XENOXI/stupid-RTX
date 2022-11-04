@@ -68,8 +68,8 @@ int SDL_main(int arhc, char** argv) {
     sc1.objs.push_back(&sph1);
     sc1.objs.push_back(&po);
     */
-    sc1.objs.push_back(&po1);
-   // sc1.objs.push_back(&sph);
+    //sc1.objs.push_back(&po1);
+    sc1.objs.push_back(&sph);
     sc1.lights.push_back(&l1);
  
     int FPS = 30;

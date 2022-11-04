@@ -321,9 +321,23 @@ void Poly_object::Rotate(float x, float y, float z)
 #ifdef NDEBUG
 
 
-void Sphere::Raycast(cl_ray* rays, long long rays_size, Kernel_program& kern_pr, Raycast_ret* rets, cl::Buffer& buff, cl::Buffer& rets_buff)
+void Sphere::Raycast(cl_ray* rays, long long rays_size, Kernel_program& kern_pr, Raycast_ret* rets, cl::Buffer& rays_buff, cl::Buffer& rets_buff)
 {
+	cl_int cl_error;
+	cl::Kernel kern(kern_pr.program, "sphere_raycast", &cl_error);
+	Kernel_program::cl_throw_error(cl_error);
+	cl_sphere chr;
+	chr.pt = pt;
+	chr.rad = rad;
+	Kernel_program::cl_throw_error(kern.setArg(0, rays_buff));
+	Kernel_program::cl_throw_error(kern.setArg(1, rets_buff));
+	Kernel_program::cl_throw_error(kern.setArg(2, chr));
+
+	cl::CommandQueue queue(kern_pr.context, kern_pr.devices[0]);
 	
+	Kernel_program::cl_throw_error(queue.enqueueNDRangeKernel(kern, cl::NullRange, cl::NDRange(rays_size)));
+
+	Kernel_program::cl_throw_error(queue.enqueueReadBuffer(rets_buff, CL_TRUE, 0, sizeof(Raycast_ret) * rays_size, rets));
 }
 
 
@@ -341,9 +355,6 @@ void Poly_object::Raycast(cl_ray* rays,long long rays_size, Kernel_program& kern
 	Kernel_program::cl_throw_error(kern.setArg(0, rays_buff));
 	Kernel_program::cl_throw_error(kern.setArg(1, poly_buf));
 	Kernel_program::cl_throw_error(kern.setArg(2, rets_buff));
-
-	Raycast_ret res;
-
 
 
 	cl::CommandQueue queue(kern_pr.context, kern_pr.devices[0]);

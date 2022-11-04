@@ -19,6 +19,12 @@ typedef struct ray_
     float3 pt;
 }ray;
 
+typedef struct Shpere_
+{
+    float rad;
+    float3 pt;
+}sphere;
+
 float float_abs(float e)
 {
     if (e<0)
@@ -78,6 +84,53 @@ kernel void polygon_raycast(global const ray* rays,global const polygon* polys,g
         ret[ray_id].norm = polys[pol_id].norm;  
         ret[ray_id].dist = t; 
     }
+}
+
+kernel void sphere_raycast(global const ray* rays,global raycast_return* rets,const sphere sph)
+{   
+    size_t id = get_global_id(0);
+    float3 cent_vec = rays[id].pt - sph.pt;
+    float b = 2 * dot(cent_vec,rays[id].dir);
+    float c = dot(cent_vec,cent_vec)-(sph.rad*sph.rad);
+    float disc = (b*b) - (4*c);
+    float3 h;
+    if (disc<0)
+        return;
+    float k1 = (sqrt(disc)-b)/2;
+    float k2 = -(sqrt(disc)+b)/2;
+    if (k1<COMPUTING_ERROR && k2<COMPUTING_ERROR)
+        return;
+    if(k1<COMPUTING_ERROR)
+    {
+        if (k2<rets[id].dist)
+        {
+            h = rays[id].pt + (rays[id].dir*k2);
+            rets[id].pt = h;
+            rets[id].dist = k2;
+            rets[id].norm =normalize(h-sph.pt);
+        }
+        return;
+    }
+    if (k2<COMPUTING_ERROR)
+    {
+        if (k1<rets[id].dist)
+        {
+            h = rays[id].pt + (rays[id].dir*k1);
+            rets[id].pt = h;
+            rets[id].dist = k1;
+            rets[id].norm =normalize(h-sph.pt);
+        }
+        return;
+    }
+    float k = min(k1,k2);
+    float3 p = rays[id].pt+(rays[id].dir*k);
+    if (k<rets[id].dist)
+    {
+        rets[id].dist = k;
+        rets[id].norm =normalize(p-sph.pt);
+        rets[id].pt = p;
+    }
+    
 }
 
 

@@ -100,7 +100,17 @@ public:
 
 class Sphere : public Object
 {	
+private:
+#ifdef NDEBUG
+	typedef struct cl_sphere
+	{
+		cl_float rad;
+		cl_float3 pt;
+	};
+#endif // NDEBUG
 public:
+
+
 	Sphere() {
 		rad = 0;
 	}
