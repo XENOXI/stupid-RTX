@@ -10,6 +10,7 @@ SDL_Window* win = NULL;
 SDL_Renderer* ren = NULL;
 SDL_Surface* surf = NULL;
 
+
 bool init() {
     bool ok = true;
 
@@ -59,6 +60,8 @@ void set_pixel(int x, int y, SDL_Color cl)
     *target_pixel = pixel;
 }
 
+
+
 Cam::Cam(int x, int y,float ang,int max_v)
 {
     Res_x = x;
@@ -70,18 +73,48 @@ Cam::Cam(int x, int y,float ang,int max_v)
     dX = 2 * tan(angle / 2);
     sX = dX / (x-1);
     dY = sX* (y-1); 
-       
-
+    rays = new cl_ray[(long long)x*y];
 }
 
 Cam::Cam()
 {
-    *this = Cam(SCREEN_WIDTH, SCREEN_HEIGHT,70,1000);
+    *this = Cam(SCREEN_HEIGHT, SCREEN_WIDTH, 70,1000);
+}
+
+Scene::Scene()
+{
+    kern_pr = NULL;
+    rets = NULL;
+
+}
+
+
+Scene::Scene(Kernel_program& pr)
+{
+    kern_pr = &pr;
+    long long resol = (long long)cam.Res_x * cam.Res_y;
+    rets = new Raycast_ret[resol];
+    cl_int cl_error;
+    ray_buff = cl::Buffer(kern_pr->context, (CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY | CL_MEM_COPY_HOST_PTR), resol * sizeof(cl_ray), cam.rays, &cl_error);
+    rets_buff = cl::Buffer(kern_pr->context, (CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY | CL_MEM_COPY_HOST_PTR), resol * sizeof(Raycast_ret),rets, &cl_error);
+    Kernel_program::cl_throw_error(cl_error);
+}
+
+void Scene::set_program(Kernel_program& pr)
+{
+    kern_pr = &pr;//TODO 
+    long long resol = (long long)cam.Res_x * cam.Res_y;
+    rets = new Raycast_ret[resol];
+    cl_int cl_error;
+    ray_buff = cl::Buffer(kern_pr->context, (CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY | CL_MEM_COPY_HOST_PTR), resol * sizeof(cl_ray), cam.rays, &cl_error);
+    rets_buff = cl::Buffer(kern_pr->context, (CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY | CL_MEM_COPY_HOST_PTR), resol * sizeof(Raycast_ret), rets, &cl_error);
+    Kernel_program::cl_throw_error(cl_error);
 }
 
 void Scene::render()
 {
-    
+
+
     std::thread threads[THREADS];
     float resize = cam.Res_x / THREADS;
     for (int i = 0; i < THREADS; i++)
@@ -109,12 +142,12 @@ void Scene::render()
     
 }
 
-SDL_Color Scene::Raytrace(Ray r,int rd_depth,Material* now_mat)
+SDL_Color Scene::Raytrace(Ray r,int rd_depth,float lenght,Material* now_mat)
 {
     if (rd_depth == 0)
         return SDL_Color{ 0,0,0 };
     Raycast_ret p;
-    float len = r.len;
+    float len = lenght;
     Point res;
     SDL_Color cl;
     Object* now_obj = NULL;
@@ -123,20 +156,20 @@ SDL_Color Scene::Raytrace(Ray r,int rd_depth,Material* now_mat)
     for (Object* obj : objs)
     {
         p = obj->Raycast(r);
-        for (Point pt : p.pts)
+        if(p.dist < lenght)
         {
-            blen = (pt - r.pt).Length();
-            if (blen >= err && blen < len)
+            //blen = (p.pt - r.pt).Length();
+            if (blen >= COMPUTING_ERROR && blen < len)
             {
-                res = pt;
+                //res = p.pt;
                 len = blen;
                 now_obj = obj;
-                norm = p.norm;
+                //norm = p.norm;
             }
         }
     }
    
-    if (len == r.len)
+    if (len == lenght)
         return SDL_Color{ 0,0,0 };
 
     cl = now_obj->mat.color;
@@ -148,8 +181,7 @@ SDL_Color Scene::Raytrace(Ray r,int rd_depth,Material* now_mat)
         Ray rh;
         rh.pt = res;
         rh.dir = r.dir - (norm * (2 * (r.dir ^ norm)));
-        rh.len = r.len - len;
-        SDL_Color next_cl = Raytrace(rh, rd_depth - 1,now_mat);
+        SDL_Color next_cl = Raytrace(rh, rd_depth - 1, lenght - len,now_mat);
         float h = cl.r*(1- now_obj->mat.mirroring) + next_cl.r* now_obj->mat.mirroring;
         cl.r = (int)h;
         h = cl.g * (1 - now_obj->mat.mirroring) + next_cl.g * now_obj->mat.mirroring;
@@ -174,15 +206,14 @@ SDL_Color Scene::Raytrace(Ray r,int rd_depth,Material* now_mat)
         new_ray.pt = res;
         new_ray.dir = buff_norm * (c * ref - sq);
         new_ray.dir = new_ray.dir + r.dir * ref;
-        new_ray.len = r.len - len;
         new_ray.dir.normalize();
-        SDL_Color next_cl = Raytrace(new_ray, rd_depth - 1, obj_mat);
+        SDL_Color next_cl = Raytrace(new_ray, rd_depth - 1, lenght - len, obj_mat);
         cl.r = cl.r * (1 - obj_mat->transparency) + next_cl.r * obj_mat->transparency;
         cl.g = cl.g * (1 - obj_mat->transparency) + next_cl.g * obj_mat->transparency;
         cl.b = cl.b * (1 - obj_mat->transparency) + next_cl.b * obj_mat->transparency;
     }
     Light all_light;  all_light.cl = { 0,0,0 };
-    all_light.brightness = LightCompute(res, norm, r.dir, now_obj->mat.mirroring);
+    all_light.brightness = LightCompute(res, norm,lenght, r.dir, now_obj->mat.mirroring);
     cl.r = (now_obj->mat.light_glaring * all_light.cl.r + (cl.r) * (1 - now_obj->mat.light_glaring)) * all_light.brightness;
     cl.g = (now_obj->mat.light_glaring * all_light.cl.g + (cl.g) * (1 - now_obj->mat.light_glaring)) * all_light.brightness;
     cl.b = (now_obj->mat.light_glaring * all_light.cl.b + (cl.b) * (1 - now_obj->mat.light_glaring)) * all_light.brightness;
@@ -202,10 +233,9 @@ void Scene::new_render_thread(int from,int to)
             r.dir = Point{ i * cam.sX - (cam.dX / 2),(-j * cam.sX) + (cam.dY / 2),1 };
             
             r.dir.normalize();
-            r.len = cam.max_view;
             if (i == 150 && j == 100)
                 dd = 1;
-            set_pixel(i, j, Raytrace(r, Render_depth,&void_mat));
+            set_pixel(i, j, Raytrace(r, Render_depth, cam.max_view,&void_mat));
         }
     }
     
@@ -213,7 +243,7 @@ void Scene::new_render_thread(int from,int to)
 
 
 
-float Scene::LightCompute(Point pt, Vector norm, Vector r, float mir)
+float Scene::LightCompute(Point pt, Vector norm,float lenght, Vector r, float mir)
 {
     float l = 0;
     Vector v;
@@ -236,10 +266,10 @@ float Scene::LightCompute(Point pt, Vector norm, Vector r, float mir)
             for (Object* obj : objs)
             {
                 p = obj->Raycast(now);
-                for (Point pti : p.pts)
+                if (p.dist<lenght)
                 {
-                    blen = (pti - now.pt).Length();
-                    if (blen >= err)
+                    //blen = (cl_float3_to_Point(p.pt) - now.pt).Length();
+                    if (blen >= COMPUTING_ERROR)
                     {
                         shadow = true;
                         break;
@@ -266,3 +296,65 @@ float Scene::LightCompute(Point pt, Vector norm, Vector r, float mir)
     return l;
 }
 
+
+
+
+static void render_thread(Scene* sc,SDL_Color** out)
+{
+
+    
+    for (int i = 0; i < sc->cam.Res_x; i++)
+    {
+        for (int j = 0; j < sc->cam.Res_y; j++)
+        {
+            Ray r;
+            r.pt = sc->cam.pt;
+            r.dir = Point{ i * sc->cam.sX - (sc->cam.dX / 2),(-j * sc->cam.sX) + (sc->cam.dY / 2),1 };
+
+            r.dir.normalize();
+            out[i][j] = sc->Raytrace(r, sc->Render_depth,sc->cam.max_view, &sc->void_mat);
+        }
+    }
+}
+
+#ifdef NDEBUG
+void Scene::kernel_raytrace(int rd_depth, float lenght, Material* now_mat)
+{
+    // Заполнение массива лучей
+    cl_float3  CamCHR = { cam.sX,cam.dY,cam.dX };
+    cl_int cl_error;
+    cl::Kernel kern(kern_pr->program, "setRays", &cl_error);
+    Kernel_program::cl_throw_error(cl_error);
+    Kernel_program::cl_throw_error(kern.setArg(0, ray_buff));
+    Kernel_program::cl_throw_error(kern.setArg(1, (cl_float3)cam.pt));
+    Kernel_program::cl_throw_error(kern.setArg(2, CamCHR));
+    Kernel_program::cl_throw_error(kern.setArg(3, rets_buff));
+    Kernel_program::cl_throw_error(kern.setArg(4, cam.max_view));
+    cl::NDRange range(cam.Res_y, cam.Res_x);
+
+    cl::CommandQueue queue(kern_pr->context, kern_pr->devices[0]);
+    Kernel_program::cl_throw_error(queue.enqueueNDRangeKernel(kern, cl::NullRange, range));
+    Kernel_program::cl_throw_error(queue.enqueueReadBuffer(ray_buff, CL_TRUE, 0, sizeof(cl_ray) * (long long)cam.Res_x*cam.Res_y, cam.rays));
+    Kernel_program::cl_throw_error(queue.enqueueReadBuffer(rets_buff, CL_TRUE, 0, sizeof(Raycast_ret) * (long long)cam.Res_x*cam.Res_y, rets));
+
+
+
+
+    // Рейкаст со всеми обьектами
+    for (auto& obj : objs)
+        obj->Raycast(cam.rays, (long long)cam.Res_x * cam.Res_y, *kern_pr,rets,ray_buff,rets_buff);
+    ////////////////
+
+    // Свет
+    
+    for (int i =0;i<SCREEN_HEIGHT;i++)
+        for (int j = 0; j < SCREEN_WIDTH; j++)
+        {
+            if (rets[(long long)i * SCREEN_WIDTH + j].dist < lenght)
+                set_pixel(j, i, SDL_Color{ 255, 0, 0 });
+        }
+
+}
+
+
+#endif // NDEBUG

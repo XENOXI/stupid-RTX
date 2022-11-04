@@ -18,23 +18,39 @@ Poly_object stl_read(std::string filename)
         in.read(&header,1);
     in.read((char*)&nums, sizeof(Uint32));
     Polygon pol;
+#ifdef NDEBUG
+    cl_polygon cl_pol;
+#endif // NDEBUG
+
+
     for (Uint32 i = 0; i < nums; i++)
     {
         in.read((char*)&pol.norm.z , sizeof(float));
         in.read((char*)&pol.norm.x, sizeof(float));
         in.read((char*)&pol.norm.y, sizeof(float));
-
+#ifdef NDEBUG
+        cl_pol.norm=(cl_float3)pol.norm;
+#endif // NDEBUG
         for (int j = 0; j < 3; j++)
         {
             in.read((char*)&pol.points[j].z, sizeof(float));
             in.read((char*)&pol.points[j].x, sizeof(float));
             in.read((char*)&pol.points[j].y, sizeof(float));
-
+#ifdef NDEBUG
+            cl_pol.pts[j] = (cl_float3)pol.points[j];
+#endif // NDEBUG
         }
         in.read((char*)&buff, sizeof(Uint16));
         res.viewed.push_back(pol);
         res.orig.push_back(pol);
+#ifdef NDEBUG
+        res.cl_orig.push_back(cl_pol);
+        res.cl_viewed.push_back(cl_pol);
+#endif // NDEBUG
     }
+#ifdef NDEBUG
+    cl_pol.norm = (cl_float3)pol.norm;
+#endif // NDEBUG
     in.close();
     return res;
 }

@@ -1,9 +1,12 @@
 #pragma once
 #include <vector> 
 #include <SDL.h>
-#define err 0.0001
+#include "threading.h"
+#define COMPUTING_ERROR 0.0001
 //typedef struct Color
 class Vector;
+
+
 
 class Point
 {
@@ -11,6 +14,7 @@ public:
 	float x, y,z;
 	Point();
 	Point(float,float,float);
+	operator cl_float3() const;
 	Point operator+(const Vector v) const;
 	Vector operator-(const Point p) const;
 };
@@ -35,15 +39,14 @@ public:
 };
 
 
-class Ray
+
+typedef struct Ray
 {
-public:
-	Point pt;
 	Vector dir;
-	float len;
-	Ray();
-	Ray(float);
+	Point pt;
 };
+
+std::ostream& operator<<(std::ostream& out, const Ray& r);
 
 typedef struct Polygon
 {
@@ -63,8 +66,9 @@ public:
 
 typedef struct Raycast_ret
 {
-	std::vector<Point> pts;
-	Vector norm;
+	cl_float3 pt;
+	cl_float3 norm;
+	float dist;
 };
 
 class Object
@@ -73,10 +77,13 @@ public:
 	float rotation_x=0, rotation_y=0, rotation_z=0;
 	Material mat;
 	Point pt;
-	virtual Raycast_ret Raycast(Ray) { return Raycast_ret();}
+#ifdef NDEBUG
+	virtual void Raycast(cl_ray*, long long, Kernel_program&, Raycast_ret*,cl::Buffer& buff, cl::Buffer& rets_buff)=0;
+#endif
+	virtual Raycast_ret Raycast(Ray) = 0;
 	virtual void Rotate(float, float, float) {}
 	virtual void Resize(float, float, float) {}
-	virtual Ray Refract(Point, Ray) { return Ray(); }
+
 };
 enum Xtype { ambient, point, directional };
 
@@ -102,6 +109,9 @@ public:
 	}
 	float rad;
 	Raycast_ret Raycast(Ray);
+#ifdef NDEBUG
+	void Raycast(cl_ray*, long long, Kernel_program&, Raycast_ret*, cl::Buffer& buff, cl::Buffer& rets_buff);
+#endif
 	void Rotate(float, float, float) {};
 	void Resize(float, float, float);
 
@@ -114,11 +124,15 @@ class Poly_object : public Object
 private:
 	Vector norm = Point{ 0,0,0 };
 	Point center;
-	
 public:
+	std::vector<cl_polygon> cl_viewed;
+	std::vector<cl_polygon> cl_orig;
 	std::vector<Polygon> orig;
 	std::vector<Polygon> viewed;
 	Raycast_ret Raycast(Ray);
+#ifdef NDEBUG
+	void Raycast(cl_ray*, long long, Kernel_program&,Raycast_ret*, cl::Buffer& buff, cl::Buffer& rets_buff);
+#endif
 	void Rotate(float, float, float);
 	void Resize(float, float, float){};
 

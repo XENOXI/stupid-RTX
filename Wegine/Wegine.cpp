@@ -1,24 +1,23 @@
 ﻿#include "Render.h"
 #include "STL_parser.h"
 #include <iostream>
+#include <sstream>
 
-using namespace std;
 
-extern int SCREEN_WIDTH;
-extern int SCREEN_HEIGHT;
+
 extern SDL_Window* win;
 extern SDL_Surface* surf;
 int TimePerTick;
 
 int SDL_main(int arhc, char** argv) {
-    if (!init()) {
-        quit();
-        system("pause");
-        return 1;
-    }
+
+    Kernel_program kern("Render.cl");
+
+    init();
+   // cl::finish();
 
 
-
+    
     Poly_object po1 = stl_read("./lowpoly.stl");
 
     
@@ -60,19 +59,20 @@ int SDL_main(int arhc, char** argv) {
     l1.type = point;
     l1.dir = Point{ 0,0,1 };
 
-    Scene sc1; 
+    Scene sc1(kern);
     sc1.cam = Cam();
     sc1.cam.pt = { 0,20,-100 };
+    sc1.cam.max_view = 1000;
     /*
         
     sc1.objs.push_back(&sph1);
     sc1.objs.push_back(&po);
     */
     sc1.objs.push_back(&po1);
-    sc1.objs.push_back(&sph);
+   // sc1.objs.push_back(&sph);
     sc1.lights.push_back(&l1);
  
-    int FPS = 10000;
+    int FPS = 30;
     TimePerTick = 1000/FPS;
     int start = SDL_GetTicks();
     bool right = true;
@@ -81,11 +81,11 @@ int SDL_main(int arhc, char** argv) {
     while (true)
     {
         SDL_FillRect(surf, NULL, 0x000000);
-        sc1.render();
-        po1.Rotate(0.1, 0.1, 0.1);
+        sc1.kernel_raytrace(3, 1000, NULL);
+       // po1.Rotate(0.1, 0.1, 0.1);
         SDL_UpdateWindowSurface(win);
         int end = SDL_GetTicks();
-        cout << end - start<<endl;
+        std::cout << end - start<<std::endl;
         if (end - start < TimePerTick)
             SDL_Delay(TimePerTick-end+start);
         start = end;

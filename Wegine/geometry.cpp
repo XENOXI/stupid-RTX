@@ -137,6 +137,11 @@ Point::Point(float x_, float y_, float z_)
 	z = z_;
 }
 
+Point::operator cl_float3() const
+{
+	return { x,y,z };
+}
+
 Point Point::operator+(const Vector v) const
 {
 	Point res;
@@ -155,67 +160,7 @@ Vector Point::operator-(const Point p) const
 	return res;
 }
 
-Ray::Ray()
-{
-	len = 0;
-}
 
-Ray::Ray(float leng)
-{
-	len = leng;
-}
-
-Raycast_ret Sphere::Raycast(Ray r)
-{
-	Raycast_ret res;
-	Point h;
-	float a = r.dir ^ r.dir;
-	Vector centVec =  r.pt - pt;
-	float b = 2 * (centVec ^ r.dir);
-	float c = (centVec ^ centVec) - (rad * rad);
-	float disc = b * b - 4 * a * c;
-	if (disc < 0)
-		return res;
-	float k1 = (sqrt(disc)-b) / (2 * a);
-	float k2 = -(sqrt(disc)+b) / (2 * a);
-	if (k1 < err && k2 < err)
-		return res;
-
-	
-	if (k1 < err)
-	{
-		h = r.pt + (r.dir * k2);
-		res.pts.push_back(h);
-		res.norm = h - pt;
-		res.norm.normalize();
-		return res;
-	}
-	if (k2 < err)
-	{
-		h = r.pt + (r.dir * k1);
-		res.pts.push_back(h);
-		res.norm = h - pt;
-		res.norm.normalize();
-		return res;
-	}
-
-	Point p1 = r.pt + (r.dir * k1);
-	Point p2 = r.pt + (r.dir * k2);
-	if (k1<k2)
-	{
-		res.norm = p1 - pt;
-		res.norm.normalize();
-		res.pts.push_back(p1);
-	}
-	else
-	{
-		res.norm = p2 - pt;
-		res.norm.normalize();
-		res.pts.push_back(p2);
-	}
-		
-	return res;
-}
 
 
 void Sphere::Resize(float x, float, float)
@@ -224,37 +169,98 @@ void Sphere::Resize(float x, float, float)
 }
 
 
+Raycast_ret Sphere::Raycast(Ray r)
+{
+	Raycast_ret res;
+	Point h;
+	float a = r.dir ^ r.dir;
+	Vector centVec = r.pt - pt;
+	float b = 2 * (centVec ^ r.dir);
+	float c = (centVec ^ centVec) - (rad * rad);
+	float disc = b * b - 4 * a * c;
+	if (disc < 0)
+		return res;
+	float k1 = (sqrt(disc) - b) / (2 * a);
+	float k2 = -(sqrt(disc) + b) / (2 * a);
+	if (k1 < COMPUTING_ERROR && k2 < COMPUTING_ERROR)
+		return res;
+
+
+	if (k1 < COMPUTING_ERROR)
+	{
+		h = r.pt + (r.dir * k2);
+		res.pt = h;
+		res.norm = h - pt;
+		res.dist = k1;
+		//res.norm.normalize();
+		return res;// TODO
+	}
+	if (k2 < COMPUTING_ERROR)
+	{
+		h = r.pt + (r.dir * k1);
+		res.pt = h;
+		res.norm = h - pt;
+		//res.norm.normalize();
+		return res;// TODO
+	}
+
+	Point p1 = r.pt + (r.dir * k1);
+	Point p2 = r.pt + (r.dir * k2);
+	if (k1 < k2)
+	{
+		res.norm = p1 - pt;
+		//res.norm.normalize();
+		res.pt = h;// TODO
+	}
+	else
+	{
+		res.norm = p2 - pt;
+		//res.norm.normalize();
+		res.pt=h;  // TODO
+	}
+
+	return res;
+}
+
+
+
 
 Raycast_ret Poly_object::Raycast(Ray r)
 {
+
+
 	Raycast_ret res;
 	Point Pres;
-	bool is_inter=false;
+	bool is_inter = false;
 	Vector e1res;
 	Vector e2res;
-	float dist=INFINITY;
+	float dist = INFINITY;
 	Polygon now;
 	Vector normal_res;
-	for (Polygon pol : viewed)
+	for (int i =0;i<viewed.size();i++)
+	//for (Polygon pol : viewed)
 	{
+		Polygon pol = viewed[i];
+		if (i == 180)
+			std::cout << "";
 		Vector e1 = (pol.points[1] - pol.points[0]);
 		Vector e2 = (pol.points[2] - pol.points[0]);
 		Vector normi = r.dir * e2;
 		float det = e1 ^ normi;
-		if (abs(det) < err)
+		if (abs(det) < COMPUTING_ERROR)
 			continue;
 		float inv_det = 1 / det;
 		Vector tvec = r.pt - pol.points[0];
-		float u = (tvec^normi) * inv_det;
+		float u = (tvec ^ normi) * inv_det;
 		if (u < 0 || u > 1)
 			continue;
-		Vector qvec = tvec* e1;
-		float v = (r.dir^qvec) * inv_det;
+		Vector qvec = tvec * e1;
+		float v = (r.dir ^ qvec) * inv_det;
 		if (v < 0 || u + v > 1)
 			continue;
 
 		float t = (e2 ^ qvec) * inv_det;
-		if (t > err)
+		if (t > COMPUTING_ERROR)
 		{
 			if (t < dist)
 			{
@@ -263,18 +269,18 @@ Raycast_ret Poly_object::Raycast(Ray r)
 				e2res = e2;
 				is_inter = true;
 				dist = t;
+				res.dist = dist;
 			}
 		}
-			
 	}
 	
 	if (!is_inter)
 		return res;
 	res.norm = e1res * e2res;
-	res.norm.normalize();
-	if ((res.norm ^ r.dir) > 0)
-		res.norm *= -1;
-	res.pts.push_back(Pres);
+	//res.norm.normalize();
+	//if ((res.norm ^ r.dir) > 0)
+		//res.norm *= -1;
+	res.pt = Pres;
 	return res;
 }
 
@@ -282,31 +288,77 @@ void Poly_object::Rotate(float x, float y, float z)
 {
 	rotation_x += x;
 	while (rotation_x > M_PI)
-		rotation_x -= 2*M_PI;
+		rotation_x -= 2 * M_PI;
 	while (rotation_x < -M_PI)
-		rotation_x += 2*M_PI;
+		rotation_x += 2 * M_PI;
 
 	rotation_y += y;
 	while (rotation_y > M_PI)
-		rotation_y -= 2*M_PI;
+		rotation_y -= 2 * M_PI;
 	while (rotation_y < -M_PI)
-		rotation_y += 2*M_PI;
+		rotation_y += 2 * M_PI;
 
 	rotation_z += z;
 	while (rotation_z > M_PI)
-		rotation_z -= 2*M_PI;
+		rotation_z -= 2 * M_PI;
 	while (rotation_z < -M_PI)
-		rotation_z += 2*M_PI;
+		rotation_z += 2 * M_PI;
 
-	for (int j = 0; j<orig.size();j++)
+	for (int j = 0; j < orig.size(); j++)
 	{
-		for (int i = 0;i<3;i++)
+		for (int i = 0; i < 3; i++)
 		{
 			Vector buff = (Vector)orig[j].points[i];
-			
-			viewed[j].points[i] = buff.Rotate(rotation_x,rotation_y,rotation_z);
+
+			viewed[j].points[i] = buff.Rotate(rotation_x, rotation_y, rotation_z);
 		}
 	}
 }
 
 
+
+
+#ifdef NDEBUG
+
+
+void Sphere::Raycast(cl_ray* rays, long long rays_size, Kernel_program& kern_pr, Raycast_ret* rets, cl::Buffer& buff, cl::Buffer& rets_buff)
+{
+	
+}
+
+
+void Poly_object::Raycast(cl_ray* rays,long long rays_size, Kernel_program& kern_pr,Raycast_ret* rets, cl::Buffer& rays_buff,cl::Buffer& rets_buff)
+{
+	cl_int cl_error;
+
+	
+	cl::Buffer poly_buf(kern_pr.context, (CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY | CL_MEM_COPY_HOST_PTR), cl_viewed.size()*sizeof(cl_polygon), cl_viewed.data(), &cl_error);
+	Kernel_program::cl_throw_error(cl_error);
+
+	cl::Kernel kern(kern_pr.program, "polygon_raycast", &cl_error);
+	Kernel_program::cl_throw_error(cl_error);
+
+	Kernel_program::cl_throw_error(kern.setArg(0, rays_buff));
+	Kernel_program::cl_throw_error(kern.setArg(1, poly_buf));
+	Kernel_program::cl_throw_error(kern.setArg(2, rets_buff));
+
+	Raycast_ret res;
+
+
+
+	cl::CommandQueue queue(kern_pr.context, kern_pr.devices[0]);
+
+	Kernel_program::cl_throw_error(queue.enqueueNDRangeKernel(kern, cl::NullRange, cl::NDRange(rays_size,viewed.size())));
+
+	Kernel_program::cl_throw_error(queue.enqueueReadBuffer(rets_buff, CL_TRUE, 0, sizeof(Raycast_ret) * rays_size, rets));
+
+
+}
+
+#endif //  NDEBUG
+
+std::ostream& operator<<(std::ostream& out, const Ray& r)
+{
+	out << "Ray(direction=(" << r.dir.x << ',' << r.dir.y << ',' << r.dir.z << "),point = (" << r.pt.x << ',' << r.pt.y << ',' << r.pt.z<<"))";
+	return out;
+}

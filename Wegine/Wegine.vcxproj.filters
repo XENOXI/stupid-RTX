@@ -27,6 +27,9 @@
     <ClCompile Include="STL_parser.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="threading.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="geometry.h">
@@ -38,11 +41,17 @@
     <ClInclude Include="STL_parser.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="threading.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="lowpoly.stl">
       <Filter>Исходные файлы</Filter>
     </None>
     <None Include="cpp.hint" />
+    <None Include="Render.cl">
+      <Filter>Исходные файлы</Filter>
+    </None>
   </ItemGroup>
 </Project>
