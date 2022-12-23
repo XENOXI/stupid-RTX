@@ -133,4 +133,7 @@ kernel void sphere_raycast(global const ray* rays,global raycast_return* rets,co
     
 }
 
+kernel void light_compute(global float* light,global const float3* lights,global float3* pts)
+{
 
+}
