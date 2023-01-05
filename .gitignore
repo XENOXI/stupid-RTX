@@ -4,3 +4,9 @@
 
 /.vs/Wegine
 /x64
+/Wegine/x64
+/Wegine/x64/Release/RTX.tlog/CL.command.1.tlog
+/Wegine/x64/Release/RTX.tlog/CL.read.1.tlog
+/Wegine/x64/Release/RTX.tlog/CL.write.1.tlog
+/Wegine/x64/Release/RTX.tlog/link.read.1.tlog
+/Wegine/x64/Release/RTX.tlog/RTX.lastbuildstate
