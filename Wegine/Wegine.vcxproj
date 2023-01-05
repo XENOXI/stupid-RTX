@@ -147,6 +147,7 @@
     <ClInclude Include="threading.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\.gitignore" />
     <None Include="cpp.hint" />
     <None Include="lowpoly.stl" />
     <None Include="Render.cl" />

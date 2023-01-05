@@ -68,8 +68,8 @@ int SDL_main(int arhc, char** argv) {
     sc1.objs.push_back(&sph1);
     sc1.objs.push_back(&po);
     */
-    //sc1.objs.push_back(&po1);
-    sc1.objs.push_back(&sph);
+    sc1.objs.push_back(&po1);
+    //sc1.objs.push_back(&sph);
     sc1.lights.push_back(&l1);
  
     int FPS = 30;
@@ -77,12 +77,12 @@ int SDL_main(int arhc, char** argv) {
     int start = SDL_GetTicks();
     bool right = true;
 
-    //po1.Rotate(0, -1.57, 0);
+    po1.Rotate(0, -1.57, 0);
     while (true)
     {
         SDL_FillRect(surf, NULL, 0x000000);
         sc1.kernel_raytrace(3, 1000, NULL);
-       // po1.Rotate(0.1, 0.1, 0.1);
+        po1.Rotate(0.1, 0.1, 0.1);
         SDL_UpdateWindowSurface(win);
         int end = SDL_GetTicks();
         std::cout << end - start<<std::endl;

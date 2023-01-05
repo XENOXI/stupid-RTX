@@ -53,5 +53,8 @@
     <None Include="Render.cl">
       <Filter>Исходные файлы</Filter>
     </None>
+    <None Include="..\.gitignore">
+      <Filter>Исходные файлы</Filter>
+    </None>
   </ItemGroup>
 </Project>
